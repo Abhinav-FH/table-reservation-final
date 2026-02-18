@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           BigInt    @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  restaurant   Restaurant?
+
+  @@index([email])
+  @@map("admins")
+}
+
+model Customer {
+  id           BigInt    @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  phone        String
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  reservations  Reservation[]
+
+  @@index([email])
+  @@map("customers")
+}
+
+
+model Restaurant {
+  id        BigInt   @id @default(autoincrement())
+  adminId   BigInt   @unique @map("admin_id")
+  name      String
+  address   String
+  gridRows  Int      @map("grid_rows")
+  gridCols  Int      @map("grid_cols")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  admin        Admin         @relation(fields: [adminId], references: [id])
+  tables       Table[]
+  reservations Reservation[]
+
+  @@index([adminId])
+  @@map("restaurants")
+}
+
+model Table {
+  id           BigInt   @id @default(autoincrement())
+  restaurantId BigInt   @map("restaurant_id")
+  label        String
+  capacity     Int
+  gridRow      Int      @map("grid_row")
+  gridCol      Int      @map("grid_col")
+  isActive     Boolean  @default(true) @map("is_active")
+
+  restaurant        Restaurant         @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  reservationTables ReservationTable[]
+
+  @@unique([restaurantId, gridRow, gridCol])
+  @@unique([restaurantId, label])
+  @@index([restaurantId])
+  @@index([restaurantId, isActive])
+  @@map("tables")
+}
+
+model Reservation {
+  id              BigInt            @id @default(autoincrement())
+  customerId      BigInt            @map("customer_id")
+  restaurantId    BigInt            @map("restaurant_id")
+  reservationDate DateTime          @map("reservation_date") @db.Date
+  startTime       String            @map("start_time")
+  endTime         String            @map("end_time")
+  guestCount      Int               @map("guest_count")
+  status          ReservationStatus @default(PENDING)
+  specialRequests String?           @map("special_requests")
+  createdBy       CreatedBy         @map("created_by")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  customer          Customer           @relation(fields: [customerId], references: [id])
+  restaurant        Restaurant         @relation(fields: [restaurantId], references: [id])
+  reservationTables ReservationTable[]
+
+  @@index([customerId, status])
+  @@index([restaurantId, reservationDate])
+  @@index([restaurantId, startTime, endTime, status])
+  @@map("reservations")
+}
+
+model ReservationTable {
+  id            BigInt @id @default(autoincrement())
+  reservationId BigInt @map("reservation_id")
+  tableId       BigInt @map("table_id")
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  table       Table       @relation(fields: [tableId], references: [id])
+
+  @@unique([reservationId, tableId])
+  @@index([tableId])
+  @@map("reservation_tables")
+}
+
+model RefreshToken {
+  id         BigInt   @id @default(autoincrement())
+  tokenHash  String   @unique @map("token_hash")
+  userId     BigInt   @map("user_id")
+  userType   UserType @map("user_type")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([tokenHash])
+  @@index([userId, userType])
+  @@map("refresh_tokens")
+}
+
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum CreatedBy {
+  CUSTOMER
+  ADMIN
+}
+
+enum UserType {
+  CUSTOMER
+  ADMIN
+}
