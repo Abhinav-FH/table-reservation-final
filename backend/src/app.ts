@@ -13,6 +13,9 @@ import tableRoutes from './modules/table/table.routes';
 import reservationRoutes from './modules/reservation/reservation.routes';
 import { errorHandler } from './middleware/errorHandler';
 import { env } from './config/env';
+import customerRoutes from './modules/customer/customer.routes';
+
+
 
 const app = express();
 
@@ -29,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/admin/tables', tableRoutes);
 app.use('/api/reservations', reservationRoutes);
+app.use('/api/admin/customers', customerRoutes);
 
 // Global error handler — must be last
 app.use(errorHandler);
