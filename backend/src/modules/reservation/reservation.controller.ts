@@ -66,6 +66,8 @@ export const adminCreateReservation = async (req: Request, res: Response, next: 
   } catch (err) { next(err); }
 };
 
+
+
 export const adminGetReservations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const adminId = BigInt((req.user as AdminPayload).adminId);

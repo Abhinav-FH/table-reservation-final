@@ -29,6 +29,7 @@ export const ErrorCodes = {
   TABLE_NOT_FOUND: 4002,
   RESERVATION_NOT_FOUND: 4003,
   CUSTOMER_NOT_FOUND: 4004,
+  PHONE_NOT_FOUND: 4005,
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

@@ -4,8 +4,8 @@ export interface Restaurant {
   id: string;
   name: string;
   address: string;
-  grid_rows: number;
-  grid_cols: number;
+  gridRows: number;
+  gridCols: number;
   activeTableCount?: number;
 }
 
