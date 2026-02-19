@@ -1,0 +1,97 @@
+export const Strings = {
+  appName: 'TableBook',
+
+  // Auth
+  login: 'Login',
+  register: 'Register',
+  logout: 'Logout',
+  email: 'Email Address',
+  password: 'Password',
+  name: 'Full Name',
+  phone: 'Mobile Number',
+  continueAsCustomer: 'Continue as Customer',
+  continueAsAdmin: 'Continue as Admin',
+  alreadyHaveAccount: 'Already have an account?',
+  dontHaveAccount: "Don't have an account?",
+  signIn: 'Sign In',
+  signUp: 'Sign Up',
+
+  // Reservation
+  reservation: 'Reservation',
+  reservations: 'Reservations',
+  myReservations: 'My Reservations',
+  newReservation: 'New Reservation',
+  editReservation: 'Edit Reservation',
+  cancelReservation: 'Cancel Reservation',
+  confirmReservation: 'Confirm Reservation',
+  reservationDate: 'Date',
+  reservationTime: 'Time',
+  guestCount: 'Number of Guests',
+  specialRequests: 'Special Requests (Optional)',
+  selectRestaurant: 'Select a Restaurant',
+  selectDate: 'Select Date',
+  selectTime: 'Select Time',
+  enterGuestCount: 'Enter number of guests',
+  specialRequestsPlaceholder: 'Any special requests or dietary requirements?',
+
+  // Status
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  cancelled: 'Cancelled',
+  completed: 'Completed',
+  upcoming: 'Upcoming',
+  checkedIn: 'Checked-In',
+  allStatus: 'All Status',
+
+  // Common
+  cancel: 'Cancel',
+  save: 'Save',
+  confirm: 'Confirm',
+  delete: 'Delete',
+  edit: 'Edit',
+  back: 'Back',
+  loading: 'Loading...',
+  noResults: 'No results found',
+  retry: 'Retry',
+  allRestaurants: 'All Restaurants',
+  search: 'Search',
+  filter: 'Filter',
+  apply: 'Apply',
+  reset: 'Reset',
+
+  // Restaurants
+  restaurants: 'Restaurants',
+  restaurantDetails: 'Restaurant Details',
+
+  // Admin
+  dashboard: 'Dashboard',
+  tables: 'Tables',
+  floorPlan: 'Floor Plan',
+  addTable: 'Add Table',
+  editTable: 'Edit Table',
+  tableLabel: 'Table Label',
+  tableCapacity: 'Capacity',
+  myRestaurant: 'My Restaurant',
+  createRestaurant: 'Create Restaurant',
+  restaurantName: 'Restaurant Name',
+  restaurantAddress: 'Address',
+
+  // Errors
+  errorGeneric: 'Something went wrong. Please try again.',
+  errorNetwork: 'Network error. Please check your connection.',
+  errorInvalidCredentials: 'Invalid email or password.',
+  errorEmailExists: 'This email is already registered.',
+  errorNoTablesAvailable: 'No tables available for the selected criteria.',
+  errorPastDate: 'Please select a future date.',
+  errorInvalidTimeSlot: 'Invalid time slot selected.',
+  errorNotEditable: 'This reservation cannot be edited.',
+
+  // Success
+  successReservationCreated: 'Reservation created successfully!',
+  successReservationUpdated: 'Reservation updated successfully!',
+  successReservationCancelled: 'Reservation cancelled.',
+  successTableAdded: 'Table added successfully!',
+  successTableUpdated: 'Table updated successfully!',
+  successTableDeleted: 'Table removed successfully!',
+  successRestaurantUpdated: 'Restaurant updated successfully!',
+};
