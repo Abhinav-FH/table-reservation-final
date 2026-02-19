@@ -42,7 +42,7 @@ const formatToday = () => {
 
 const getStatusColor = (table: FloorPlanTable, isSelected: boolean): string => {
   if (isSelected) return Colors.primary;
-  if (!table.is_active) return Colors.tableDisabled;
+  if (!table.isActive) return Colors.tableDisabled;
   if (table.status === 'booked') return Colors.tableBooked;
   return Colors.tableAvailable;
 };
@@ -515,7 +515,7 @@ export const FloorPlanScreen: React.FC = () => {
     try {
       await updateTable({
         id: selectedTable.id,
-        is_active: !selectedTable.is_active,
+        isActive: !selectedTable.isActive,
       }).unwrap();
       setSelectedTable(null);
       refetch();
@@ -704,7 +704,7 @@ export const FloorPlanScreen: React.FC = () => {
               <View style={styles.panelDetailItem}>
                 <Text style={styles.panelDetailLabel}>STATUS</Text>
                 <Text style={styles.panelDetailValue}>
-                  {!selectedTable.is_active ? 'Inactive' : selectedTable.status}
+                  {!selectedTable.isActive ? 'Inactive' : selectedTable.status}
                 </Text>
               </View>
               <View style={styles.panelDetailDivider} />
@@ -723,12 +723,12 @@ export const FloorPlanScreen: React.FC = () => {
                 disabled={isUpdating}
               >
                 <Ionicons
-                  name={selectedTable.is_active ? 'pause-circle-outline' : 'play-circle-outline'}
+                  name={selectedTable.isActive ? 'pause-circle-outline' : 'play-circle-outline'}
                   size={16}
                   color={Colors.primary}
                 />
                 <Text style={styles.panelBtnText}>
-                  {selectedTable.is_active ? 'Deactivate' : 'Activate'}
+                  {selectedTable.isActive ? 'Deactivate' : 'Activate'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity

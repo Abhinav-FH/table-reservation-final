@@ -8,7 +8,7 @@ export interface Table {
   capacity: 2 | 4 | 6;
   gridRow: number;
   gridCol: number;
-  is_active: boolean;
+  isActive: boolean;
 }
 
 export interface FloorPlanTable extends Table {

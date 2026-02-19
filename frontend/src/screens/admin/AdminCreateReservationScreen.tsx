@@ -48,7 +48,7 @@ const GUEST_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 // ── Mini table cell for floor plan ───────────────────────────────────────────
 const getTableColor = (table: FloorPlanTable, isSelected: boolean) => {
   if (isSelected) return Colors.primary;
-  if (!table.is_active) return Colors.tableDisabled;
+  if (!table.isActive) return Colors.tableDisabled;
   if (table.status === 'booked') return Colors.tableBooked;
   return Colors.tableAvailable;
 };
@@ -145,7 +145,7 @@ export const AdminCreateReservationScreen: React.FC = () => {
   const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
 
   const handleTablePress = (table: FloorPlanTable) => {
-    if (!table.is_active) {
+    if (!table.isActive) {
       Alert.alert('Table Inactive', 'This table is deactivated. Activate it on the Floor Plan screen first.');
       return;
     }

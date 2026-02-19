@@ -61,9 +61,9 @@ export const TableCell: React.FC<TableCellProps> = ({
     );
   }
 
-  const color = isSelected ? '#C8762E' : getTableColor(table.status, table.is_active);
+  const color = isSelected ? '#C8762E' : getTableColor(table.status, table.isActive);
   const handlePress = () => {
-    if (isSelectable && onPress && table.is_active) {
+    if (isSelectable && onPress && table.isActive) {
       onPress(table);
     }
   };
@@ -74,8 +74,8 @@ export const TableCell: React.FC<TableCellProps> = ({
     <TouchableOpacity
       style={[styles.cell, { width: cellSize, height: cellSize }]}
       onPress={handlePress}
-      activeOpacity={isSelectable && table.is_active ? 0.7 : 1}
-      disabled={!isSelectable || !table.is_active}
+      activeOpacity={isSelectable && table.isActive ? 0.7 : 1}
+      disabled={!isSelectable || !table.isActive}
     >
       {/* Chair indicators */}
       <View style={[styles.tableIconWrapper, { width: tableSize, height: tableSize }]}>

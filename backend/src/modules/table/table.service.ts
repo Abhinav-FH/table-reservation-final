@@ -106,11 +106,9 @@ export const getFloorPlan = async (adminId: bigint, date?: string) => {
   );
 
   for (const table of restaurant.tables) {
-    const status = !table.isActive
-      ? 'DISABLED'
-      : bookedTableIds.has(String(table.id))
-        ? 'BOOKED'
-        : 'AVAILABLE';
+    const status = bookedTableIds.has(String(table.id))
+      ? 'booked'
+      : 'available';
 
     grid[table.gridRow][table.gridCol] = {
       ...serializeTable(table),
