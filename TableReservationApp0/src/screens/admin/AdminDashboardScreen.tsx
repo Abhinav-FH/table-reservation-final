@@ -45,7 +45,10 @@ export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
     adminList.filter((r) => r.status === status).length;
 
   const todayReservations = adminList.filter(
-    (r) => r.reservation_date === new Date().toISOString().slice(0, 10),
+    (r) => {
+      const resDate = (r as any).reservationDate ?? (r as any).reservation_date ?? '';
+      return resDate === new Date().toISOString().slice(0, 10);
+    }
   ).length;
 
   return (
@@ -75,13 +78,13 @@ export const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>All Time by Status</Text>
+        <Text style={styles.sectionTitle}>Reservations by Status</Text>
         <View style={styles.statsGrid}>
           {statuses.map((status) => (
             <View key={status} style={styles.statCard}>
-              <Ionicons name={STATUS_ICONS[status] as any} size={20} color={Colors.primary} />
+              <Ionicons name={STATUS_ICONS[status] as any} size={24} color={Colors.primary} />
               <Text style={styles.statNumber}>{countByStatus(status)}</Text>
-              <Text style={styles.statLabel}>{status}</Text>
+              <Text style={styles.statLabel}>{status.toLowerCase()}</Text>
             </View>
           ))}
         </View>

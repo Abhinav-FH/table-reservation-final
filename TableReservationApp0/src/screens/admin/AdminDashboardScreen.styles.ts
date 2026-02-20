@@ -10,18 +10,22 @@ export function createDashboardStyles(colors: ThemeColors) {
     // ── Header ──────────────────────────────────────────────
     headerSection: {
       paddingHorizontal: Spacing.md,
-      paddingTop: Spacing.md,
-      paddingBottom: Spacing.sm,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.md,
+      backgroundColor: colors.card,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
     },
     greeting: {
-      fontSize: FontSize.sm,
+      fontSize: FontSize.md,
       color: colors.textSecondary,
+      fontWeight: FontWeight.medium,
     },
     restaurantName: {
-      fontSize: FontSize.xxl,
+      fontSize: FontSize.xxxl,
       fontWeight: FontWeight.bold,
       color: colors.text,
-      marginTop: 2,
+      marginTop: 4,
     },
 
     // ── No restaurant warning ────────────────────────────────
@@ -47,68 +51,73 @@ export function createDashboardStyles(colors: ThemeColors) {
     // ── Today summary ────────────────────────────────────────
     summaryRow: {
       paddingHorizontal: Spacing.md,
+      marginTop: Spacing.lg,
       marginBottom: Spacing.md,
     },
     summaryCard: {
-      backgroundColor: colors.card,
+      backgroundColor: Colors.primary,
       borderRadius: BorderRadius.xl,
-      padding: Spacing.lg,
+      padding: Spacing.xl,
       alignItems: 'center',
-      ...Shadow.small,
-      shadowColor: colors.shadow,
+      ...Shadow.medium,
+      shadowColor: Colors.primary,
     },
     summaryCardFull: {
-      // full-width variant — used as [styles.summaryCard, styles.summaryCardFull]
+      // full-width variant
     },
     summaryNumber: {
-      fontSize: 40,
+      fontSize: 48,
       fontWeight: FontWeight.bold,
-      color: colors.text,
+      color: Colors.white,
       marginTop: Spacing.sm,
     },
     summaryLabel: {
-      fontSize: FontSize.sm,
-      color: colors.textSecondary,
-      marginTop: 4,
+      fontSize: FontSize.md,
+      color: Colors.white,
+      marginTop: 6,
+      fontWeight: FontWeight.medium,
+      opacity: 0.9,
     },
 
     // ── Status stats ─────────────────────────────────────────
     sectionTitle: {
-      fontSize: FontSize.md,
-      fontWeight: FontWeight.semibold,
+      fontSize: FontSize.lg,
+      fontWeight: FontWeight.bold,
       color: colors.text,
       paddingHorizontal: Spacing.md,
-      marginBottom: Spacing.sm,
+      marginTop: Spacing.sm,
+      marginBottom: Spacing.md,
     },
     statsGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      paddingHorizontal: Spacing.sm,
-      gap: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      gap: Spacing.md,
       paddingBottom: Spacing.xl,
     },
     statCard: {
-      // Each card is ~half width minus gap
       width: '47%',
       backgroundColor: colors.card,
-      borderRadius: BorderRadius.lg,
-      padding: Spacing.md,
+      borderRadius: BorderRadius.xl,
+      padding: Spacing.lg,
       alignItems: 'center',
-      marginHorizontal: '1.5%',
-      ...Shadow.small,
+      ...Shadow.medium,
       shadowColor: colors.shadow,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     statNumber: {
-      fontSize: FontSize.xxl,
+      fontSize: 32,
       fontWeight: FontWeight.bold,
       color: colors.text,
-      marginTop: 6,
+      marginTop: 8,
     },
     statLabel: {
-      fontSize: FontSize.xs,
+      fontSize: FontSize.sm,
       color: colors.textSecondary,
-      marginTop: 2,
-      fontWeight: FontWeight.medium,
+      marginTop: 4,
+      fontWeight: FontWeight.semibold,
+      textTransform: 'capitalize',
     },
   });
 }

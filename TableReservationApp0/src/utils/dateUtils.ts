@@ -38,8 +38,20 @@ export const dateUtils = {
     try {
       const [h, m] = timeStr.split(':').map(Number);
       const date = parseISO(dateStr);
-      date.setHours(h, m);
+      date.setHours(h, m, 0, 0);
       return isPast(date);
+    } catch {
+      return false;
+    }
+  },
+
+  isPastTimeSlot: (dateStr: string, timeStr: string): boolean => {
+    try {
+      const now = new Date();
+      const [h, m] = timeStr.split(':').map(Number);
+      const slotDate = parseISO(dateStr);
+      slotDate.setHours(h, m, 0, 0);
+      return slotDate <= now;
     } catch {
       return false;
     }

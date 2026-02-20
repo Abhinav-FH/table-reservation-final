@@ -55,12 +55,7 @@ const authSlice = createSlice({
     },
 
     logoutAction: (state) => {
-      state.user = null;
-      state.accessToken = null;
-      state.refreshToken = null;
-      state.isAuthenticated = false;
-      state.isLoading = false;
-      state.error = null;
+      return initialState;
     },
 
     refreshTokenAction: (

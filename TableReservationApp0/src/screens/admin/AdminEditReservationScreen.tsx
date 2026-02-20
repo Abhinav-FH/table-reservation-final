@@ -56,13 +56,13 @@ export const AdminEditReservationScreen: React.FC<Props> = ({ navigation, route 
       setDate(resDate);
       setGuestCount(resGuests);
       setSpecialRequests(resRequests);
-      // Create a mock TimeSlot from reservation data
       setSelectedSlot({
         start_time: resStart,
         end_time: resEnd,
         available: true,
         available_tables: selected.tables?.length ?? 1,
       });
+      setSlotsChecked(true);
     }
   }, [selected]);
 
@@ -117,11 +117,13 @@ export const AdminEditReservationScreen: React.FC<Props> = ({ navigation, route 
                 <View style={styles.slotsGrid}>
                   {timeSlots.map((slot, i) => {
                     const active = selectedSlot?.start_time === slot.start_time;
+                    const isPast = dateUtils.isPastTimeSlot(date, slot.start_time);
+                    const unavailable = !slot.available || isPast;
                     return (
                       <TouchableOpacity key={i}
-                        style={[styles.slotChip, active && styles.slotChipActive, !slot.available && styles.slotChipDisabled]}
-                        onPress={() => slot.available && setSelectedSlot(slot)} disabled={!slot.available}>
-                        <Text style={[styles.slotText, active && styles.slotTextActive, !slot.available && styles.slotTextDisabled]}>
+                        style={[styles.slotChip, active && styles.slotChipActive, unavailable && styles.slotChipDisabled]}
+                        onPress={() => !unavailable && setSelectedSlot(slot)} disabled={unavailable}>
+                        <Text style={[styles.slotText, active && styles.slotTextActive, unavailable && styles.slotTextDisabled]}>
                           {dateUtils.formatTime(slot.start_time)}
                         </Text>
                       </TouchableOpacity>

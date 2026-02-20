@@ -138,13 +138,31 @@ export const AdminReservationDetailScreen: React.FC<Props> = ({ navigation, rout
         <View style={styles.card}>
           <InfoItem icon="calendar-outline" label="Date" value={dateUtils.formatDate(selected.reservationDate)} borderColor={colors.border} textSecondary={colors.textSecondary} textColor={colors.text} />
           <InfoItem icon="time-outline" label="Time" value={`${dateUtils.formatTime(selected.startTime)} – ${dateUtils.formatTime(selected.endTime)}`} borderColor={colors.border} textSecondary={colors.textSecondary} textColor={colors.text} />
-          <InfoItem icon="people-outline" label="Guests" value={`${selected.guestCount} guests`} borderColor={selected.specialRequests ? colors.border : 'transparent'} textSecondary={colors.textSecondary} textColor={colors.text} />
+          <InfoItem icon="people-outline" label="Guests" value={`${selected.guestCount} guests`} borderColor={colors.border} textSecondary={colors.textSecondary} textColor={colors.text} />
+          {selected.tables && selected.tables.length > 0 ? (
+            <InfoItem 
+              icon="restaurant-outline" 
+              label="Tables" 
+              value={selected.tables.map((t: any) => t.label ?? `Table ${t.id}`).join(', ')} 
+              borderColor={selected.specialRequests ? colors.border : 'transparent'} 
+              textSecondary={colors.textSecondary} 
+              textColor={colors.text} 
+            />
+          ) : selected.status === 'PENDING' ? (
+            <View style={{ flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: selected.specialRequests ? colors.border : 'transparent' }}>
+              <Ionicons name="restaurant-outline" size={16} color={colors.textSecondary} style={{ marginRight: 10, marginTop: 2 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>Tables</Text>
+                <Text style={{ fontSize: FontSize.sm, color: '#F59E0B', marginTop: 2, fontStyle: 'italic' }}>No tables assigned yet</Text>
+              </View>
+            </View>
+          ) : null}
           {selected.specialRequests ? (
             <InfoItem icon="chatbubble-outline" label="Special Requests" value={selected.specialRequests} borderColor="transparent" textSecondary={colors.textSecondary} textColor={colors.text} />
           ) : null}
         </View>
 
-        {/* Status update — keep screen visible, show inline spinner during update */}
+        {/* Status update */}
         {transitions.length > 0 && (
           <View style={styles.card}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm }}>
@@ -158,6 +176,12 @@ export const AdminReservationDetailScreen: React.FC<Props> = ({ navigation, rout
             <Text style={{ fontSize: FontSize.xs, color: colors.textMuted, marginBottom: Spacing.md }}>
               Current: <Text style={{ color: statusColor[selected.status], fontWeight: FontWeight.semibold }}>{selected.status}</Text>
             </Text>
+            {selected.status === 'PENDING' && (!selected.tables || selected.tables.length === 0) && (
+              <View style={{ backgroundColor: '#FEF3C7', padding: Spacing.sm, borderRadius: 8, marginBottom: Spacing.md, flexDirection: 'row', gap: 8 }}>
+                <Ionicons name="warning-outline" size={16} color="#F59E0B" style={{ marginTop: 2 }} />
+                <Text style={{ fontSize: FontSize.xs, color: '#92400E', flex: 1 }}>Edit reservation to assign tables before confirming</Text>
+              </View>
+            )}
             <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
               {transitions.map((status) => (
                 <AppButton
@@ -166,7 +190,7 @@ export const AdminReservationDetailScreen: React.FC<Props> = ({ navigation, rout
                   size="sm"
                   variant={status === 'CANCELLED' ? 'danger' : 'primary'}
                   onPress={() => handleStatusChange(status)}
-                  disabled={isLoading}  // disable (not hide) during request
+                  disabled={isLoading}
                 />
               ))}
             </View>

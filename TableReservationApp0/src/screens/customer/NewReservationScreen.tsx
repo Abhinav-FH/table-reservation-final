@@ -112,7 +112,8 @@ export const NewReservationScreen: React.FC<Props> = ({ navigation, route }) => 
                 <View style={styles.slotsGrid}>
                   {timeSlots.map((slot, i) => {
                     const isSelected = selectedSlot?.start_time === slot.start_time;
-                    const isUnavailable = !slot.available;
+                    const isPast = dateUtils.isPastTimeSlot(date, slot.start_time);
+                    const isUnavailable = !slot.available || isPast;
                     return (
                       <TouchableOpacity
                         key={i}
@@ -132,7 +133,7 @@ export const NewReservationScreen: React.FC<Props> = ({ navigation, route }) => 
                         ]}>
                           {dateUtils.formatTime(slot.start_time)}
                         </Text>
-                        {isUnavailable && <Text style={styles.slotFullLabel}>Full</Text>}
+                        {isUnavailable && <Text style={styles.slotFullLabel}>{isPast ? 'Past' : 'Full'}</Text>}
                       </TouchableOpacity>
                     );
                   })}

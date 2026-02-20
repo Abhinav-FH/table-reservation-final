@@ -79,7 +79,12 @@ export const adminGetReservations = async (req: Request, res: Response, next: Ne
 
 export const adminGetReservationById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const result = await reservationService.getReservationById(BigInt(req.params.id));
+    const id = req.params.id;
+    if (!id || id === 'undefined') {
+      res.status(400).json({ success: false, error: { code: 1000, message: 'Invalid reservation ID' } });
+      return;
+    }
+    const result = await reservationService.getReservationById(BigInt(id));
     res.json({ success: true, data: result });
   } catch (err) { next(err); }
 };

@@ -4,13 +4,13 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AdminStackParamList, Table } from '../../types';
+import { AdminStackParamList, Table, TimeSlot } from '../../types';
 import { AppButton } from '../../components/common/AppButton';
 import { AppInput } from '../../components/common/AppInput';
 import { DatePicker } from '../../components/common/DatePicker';
 import { GuestPicker } from '../../components/common/GuestPicker';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
-import { adminCreateReservationRequest } from '../../store/slices/reservationSlice';
+import { adminCreateReservationRequest, fetchAvailabilityRequest, clearTimeSlots } from '../../store/slices/reservationSlice';
 import { fetchTablesRequest } from '../../store/slices/tableSlice';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ import Toast from 'react-native-toast-message';
 import { BorderRadius, FontSize, FontWeight, Spacing } from '../../constants/layout';
 import { Colors } from '../../constants/colors';
 import { createFormStyles } from '../customer/NewReservationScreen.styles';
+import { dateUtils } from '../../utils/dateUtils';
 
 type Props = {
   navigation: NativeStackNavigationProp<AdminStackParamList, 'AdminNewReservation'>;
@@ -26,11 +27,10 @@ type Props = {
 function isValidTime(t: string): boolean {
   return /^\d{2}:\d{2}$/.test(t.trim());
 }
-
 export const AdminNewReservationScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const dispatch = useAppDispatch();
-  const { isLoading } = useAppSelector((s) => s.reservation);
+  const { isLoading, timeSlots, isSlotLoading } = useAppSelector((s) => s.reservation);
   const { adminRestaurant } = useAppSelector((s) => s.restaurant);
   const { list: tables, isLoading: isLoadingTables } = useAppSelector((s) => s.table);
   const styles = createFormStyles(colors);
@@ -40,16 +40,23 @@ export const AdminNewReservationScreen: React.FC<Props> = ({ navigation }) => {
   const [customerPhone, setCustomerPhone] = useState('');
 
   const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [guestCount, setGuestCount] = useState(2);
   const [specialRequests, setSpecialRequests] = useState('');
   const [selectedTableIds, setSelectedTableIds] = useState<number[]>([]);
+  const [slotsChecked, setSlotsChecked] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     dispatch(fetchTablesRequest());
+    return () => { dispatch(clearTimeSlots()); };
   }, [dispatch]);
+
+  useEffect(() => {
+    setSelectedSlot(null);
+    setSlotsChecked(false);
+  }, [date, guestCount]);
 
   const handleSelectTable = (id: number) => {
     setSelectedTableIds((prev) =>
@@ -58,17 +65,21 @@ export const AdminNewReservationScreen: React.FC<Props> = ({ navigation }) => {
     setErrors((e) => ({ ...e, tables: '' }));
   };
 
+  const checkAvailability = () => {
+    if (!date) { Toast.show({ type: 'error', text1: 'Select a date first' }); return; }
+    if (!adminRestaurant) { Toast.show({ type: 'error', text1: 'No restaurant found' }); return; }
+    setSlotsChecked(true);
+    setSelectedSlot(null);
+    dispatch(fetchAvailabilityRequest({ restaurantId: adminRestaurant.id, date, guestCount }));
+  };
+
   const validate = () => {
     const e: Record<string, string> = {};
     if (!customerName.trim()) e.name = 'Customer name is required';
     if (!customerEmail.trim()) e.email = 'Email is required';
     if (!customerPhone.trim()) e.phone = 'Phone number is required';
     if (!date) e.date = 'Select a date';
-    if (!startTime.trim()) {
-      e.time = 'Enter start time';
-    } else if (!isValidTime(startTime)) {
-      e.time = 'Format must be HH:MM (e.g. 19:30)';
-    }
+    if (!selectedSlot) e.time = 'Select a time slot';
     if (selectedTableIds.length === 0) e.tables = 'Select at least one table';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -89,7 +100,7 @@ export const AdminNewReservationScreen: React.FC<Props> = ({ navigation }) => {
       },
       restaurantId: adminRestaurant.id,
       reservationDate: date,
-      startTime: startTime.trim(),
+      startTime: selectedSlot!.start_time,
       guestCount,
       tableIds: selectedTableIds,
       specialRequests: specialRequests.trim() || undefined,
@@ -103,31 +114,51 @@ export const AdminNewReservationScreen: React.FC<Props> = ({ navigation }) => {
     infoText: { fontSize: FontSize.xs, color: colors.textSecondary, flex: 1, lineHeight: 18 },
     errorText: { fontSize: FontSize.xs, color: Colors.error, marginTop: 4, marginBottom: 4 },
     tableGrid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 10 },
-    tableChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.border },
-    tableChipSelected: { backgroundColor: colors.background, borderColor: colors.border },
-    tableText: { color: colors.text },
-    tableTextSelected: { color: Colors.white },
+    tableChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.inputBackground },
+    tableChipSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+    tableText: { color: colors.text, fontSize: FontSize.sm },
+    tableTextSelected: { color: Colors.white, fontWeight: FontWeight.semibold },
   };
 
-  const TablePicker = () => (
-    <View>
-      <Text style={s.sectionHeader}>ASSIGN TABLES</Text>
-      {errors.tables && <Text style={s.errorText}>{errors.tables}</Text>}
-      <View style={s.tableGrid}>
-        {tables.map((table: Table) => (
-          <TouchableOpacity
-            key={table.id}
-            style={[s.tableChip, selectedTableIds.includes(table.id) && s.tableChipSelected]}
-            onPress={() => handleSelectTable(table.id)}
-          >
-            <Text style={[s.tableText, selectedTableIds.includes(table.id) && s.tableTextSelected]}>
-              {table.label} ({table.capacity})
-            </Text>
-          </TouchableOpacity>
-        ))}
+  const TablePicker = () => {
+    // Check which tables are booked for the selected slot
+    const getBookedTables = (): Set<number> => {
+      if (!selectedSlot || !date) return new Set();
+      
+      // Backend returns availability per slot, but doesn't tell us which specific tables are booked
+      // For now, if slot is unavailable, we can't determine specific tables
+      // Backend will validate on submission
+      return new Set();
+    };
+
+    const bookedTableIds = getBookedTables();
+
+    return (
+      <View>
+        <Text style={s.sectionHeader}>ASSIGN TABLES</Text>
+        {!selectedSlot && <Text style={[s.infoText, { marginBottom: Spacing.sm }]}>Select a time slot first to check table availability</Text>}
+        {errors.tables && <Text style={s.errorText}>{errors.tables}</Text>}
+        <View style={s.tableGrid}>
+          {tables.map((table: Table) => {
+            const isBooked = bookedTableIds.has(table.id);
+            const isDisabled = !selectedSlot || isBooked;
+            return (
+              <TouchableOpacity
+                key={table.id}
+                style={[s.tableChip, selectedTableIds.includes(table.id) && s.tableChipSelected, isDisabled && { opacity: 0.5 }]}
+                onPress={() => !isDisabled && handleSelectTable(table.id)}
+                disabled={isDisabled}
+              >
+                <Text style={[s.tableText, selectedTableIds.includes(table.id) && s.tableTextSelected]}>
+                  {table.label} ({table.capacity}){isBooked ? ' 🔒' : ''}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -156,8 +187,43 @@ export const AdminNewReservationScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={s.sectionHeader}>RESERVATION DETAILS</Text>
           <DatePicker label="Date" value={date} onChange={d => { setDate(d); setErrors(e => ({ ...e, date: '' })); }} error={errors.date} />
           <GuestPicker label="Number of Guests" value={guestCount} onChange={setGuestCount} min={1} max={12} />
-          <AppInput label="Start Time" placeholder="HH:MM  (e.g. 19:30)" value={startTime} onChangeText={t => { setStartTime(t); setErrors(e => ({ ...e, time: '' })); }} leftIcon="time-outline" keyboardType="numeric" maxLength={5} error={errors.time} />
-          {!errors.time && <Text style={[s.infoText, { marginTop: -Spacing.sm, marginBottom: Spacing.md }]}>Use 24-hour format.</Text>}
+
+          <AppButton label={slotsChecked ? 'Refresh Times' : 'Check Availability'} variant="outline" fullWidth onPress={checkAvailability} isLoading={isSlotLoading} />
+
+          {slotsChecked && !isSlotLoading && (
+            <View style={styles.slotsSection}>
+              <Text style={styles.sectionTitle}>{timeSlots.length > 0 ? 'Select Time' : 'No Slots Available'}</Text>
+              {timeSlots.length > 0 && (
+                <View style={styles.slotsGrid}>
+                  {timeSlots.map((slot, i) => {
+                    const active = selectedSlot?.start_time === slot.start_time;
+                    const isPast = dateUtils.isPastTimeSlot(date, slot.start_time);
+                    const unavailable = !slot.available || isPast;
+                    return (
+                      <TouchableOpacity key={i}
+                        style={[styles.slotChip, active && styles.slotChipActive, unavailable && styles.slotChipDisabled]}
+                        onPress={() => { if (slot.available && !isPast) { setSelectedSlot(slot); setErrors(e => ({ ...e, time: '' })); } }}
+                        disabled={unavailable}>
+                        <Text style={[styles.slotText, active && styles.slotTextActive, unavailable && styles.slotTextDisabled]}>
+                          {dateUtils.formatTime(slot.start_time)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
+
+          {selectedSlot && (
+            <View style={styles.selectedBanner}>
+              <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
+              <Text style={styles.selectedBannerText}>
+                {dateUtils.formatDate(date)} · {dateUtils.formatTime(selectedSlot.start_time)}
+              </Text>
+            </View>
+          )}
+          {errors.time && <Text style={s.errorText}>{errors.time}</Text>}
 
           <TablePicker />
 

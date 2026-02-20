@@ -401,11 +401,12 @@ export const adminUpdateReservation = async (
   const restaurant = await prisma.restaurant.findUnique({ where: { adminId } });
   if (!restaurant) throw new AppError(404, ErrorCodes.RESTAURANT_NOT_FOUND, 'Restaurant not found');
 
-  const existing = await prisma.reservation.findFirst({
-    where: { id, restaurantId: restaurant.id },
+  const existing = await prisma.reservation.findUnique({
+    where: { id },
     include: { reservationTables: true },
   });
   if (!existing) throw new AppError(404, ErrorCodes.RESERVATION_NOT_FOUND, 'Reservation not found');
+  if (existing.restaurantId !== restaurant.id) throw new AppError(403, ErrorCodes.FORBIDDEN, 'Access denied');
   if (existing.status === 'CANCELLED' || existing.status === 'COMPLETED') {
     throw new AppError(409, ErrorCodes.RESERVATION_NOT_EDITABLE, 'Cannot edit cancelled or completed reservation');
   }

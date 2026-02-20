@@ -7,6 +7,7 @@ import {
   logoutAction,
   clearError,
 } from '../slices/authSlice';
+import { clearRestaurantState } from '../slices/restaurantSlice';
 import { storageUtils } from '../../utils/storage';
 import { parseApiError } from '../../utils/errorParser';
 import Toast from 'react-native-toast-message';
@@ -54,43 +55,27 @@ function* handleRegister(action: ReturnType<typeof registerRequest>): Generator 
 
 function* handleLogout(): Generator {
   try {
-    console.log('🔴 LOGOUT SAGA STARTED');
     const { store } = require('../../store');
     const state = store.getState();
     const refreshToken = state.auth.refreshToken;
-    console.log('🔴 Logout state:', { hasRefreshToken: !!refreshToken, user: state.auth.user?.email });
     
-    // Call logout endpoint if we have a refresh token
     if (refreshToken) {
       try {
-        console.log('🔴 Calling API logout endpoint...');
         yield call(authApi.logout, refreshToken);
-        console.log('✅ API logout successful');
       } catch (error) {
-        console.warn('⚠️  Logout API call failed (non-fatal):', error);
+        console.warn('Logout API call failed (non-fatal):', error);
       }
     }
     
-    // Clear local storage
-    console.log('🔴 Clearing storage...');
     yield call(storageUtils.clearAuthData);
-    console.log('✅ Storage cleared');
-    
-    // Dispatch logout to clear Redux state
-    console.log('🔴 Dispatching logout reducer...');
-    // NOTE: We don't need another logoutAction here - the saga was triggered BY that action
-    // The reducer already ran, now we just need to clear storage via saga
+    yield put(clearRestaurantState());
     
     Toast.show({ type: 'success', text1: 'Signed out successfully' });
-    console.log('✅ LOGOUT SAGA COMPLETED');
   } catch (error: any) {
-    console.error('❌ Logout saga error:', error);
-    // Still clear storage even if API call fails
+    console.error('Logout saga error:', error);
     try {
       yield call(storageUtils.clearAuthData);
-    } catch (_) {
-      // ignore
-    }
+    } catch (_) {}
   }
 }
 

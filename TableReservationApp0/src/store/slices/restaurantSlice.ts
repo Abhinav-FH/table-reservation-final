@@ -81,6 +81,10 @@ const restaurantSlice = createSlice({
     clearRestaurantError: (state) => {
       state.error = null;
     },
+
+    clearRestaurantState: () => {
+      return initialState;
+    },
   },
 });
 
@@ -101,6 +105,7 @@ export const {
   updateRestaurantSuccess,
   updateRestaurantFailure,
   clearRestaurantError,
+  clearRestaurantState,
 } = restaurantSlice.actions;
 
 export default restaurantSlice.reducer;

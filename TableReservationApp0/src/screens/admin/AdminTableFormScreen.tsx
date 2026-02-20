@@ -34,7 +34,7 @@ export const AdminTableFormScreen: React.FC<Props> = ({ navigation, route }) => 
   const isEditing = !!existing;
 
   const [label, setLabel] = useState(existing?.label ?? '');
-  const [capacity, setCapacity] = useState(existing?.capacity ?? 2);
+  const [capacity, setCapacity] = useState<2 | 4 | 6>(existing?.capacity === 2 || existing?.capacity === 4 || existing?.capacity === 6 ? existing.capacity : 2);
   const [isActive, setIsActive] = useState(existing?.isActive ?? true);
   const [labelError, setLabelError] = useState('');
 
@@ -43,8 +43,24 @@ export const AdminTableFormScreen: React.FC<Props> = ({ navigation, route }) => 
     const cols = Number(
       (adminRestaurant as any)?.gridCols ??
       (adminRestaurant as any)?.grid_cols ??
+      2
+    );
+    const rows = Number(
+      (adminRestaurant as any)?.gridRows ??
+      (adminRestaurant as any)?.grid_rows ??
       5
     );
+    
+    // Find first empty position
+    const occupied = new Set(list.map(t => `${t.gridRow},${t.gridCol}`));
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (!occupied.has(`${r},${c}`)) {
+          return { grid_row: r, grid_col: c };
+        }
+      }
+    }
+    // Fallback to end if all occupied
     const idx = list.length;
     return { grid_row: Math.floor(idx / cols), grid_col: idx % cols };
   };
@@ -107,6 +123,27 @@ export const AdminTableFormScreen: React.FC<Props> = ({ navigation, route }) => 
       borderRadius: BorderRadius.md, padding: Spacing.md, marginBottom: Spacing.md,
     },
     hintText: { fontSize: FontSize.xs, color: colors.textSecondary, flex: 1, lineHeight: 18 },
+    capacityRow: {
+      flexDirection: 'row', gap: 10, marginBottom: Spacing.md,
+    },
+    capacityBtn: {
+      flex: 1, paddingVertical: 14, borderRadius: BorderRadius.md,
+      borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.inputBackground,
+      alignItems: 'center',
+    },
+    capacityBtnActive: {
+      borderColor: Colors.primary, backgroundColor: Colors.primary,
+    },
+    capacityText: {
+      fontSize: FontSize.md, fontWeight: FontWeight.medium, color: colors.text,
+    },
+    capacityTextActive: {
+      color: Colors.white,
+    },
+    capacityLabel: {
+      fontSize: FontSize.md, fontWeight: FontWeight.medium, color: colors.text,
+      marginBottom: Spacing.sm,
+    },
   });
 
   return (
@@ -129,14 +166,19 @@ export const AdminTableFormScreen: React.FC<Props> = ({ navigation, route }) => 
             error={labelError}
           />
 
-          {/* Capacity stepper — min 1, max 20, increments by 1 */}
-          <GuestPicker
-            label="Seating Capacity"
-            value={capacity}
-            onChange={setCapacity}
-            min={1}
-            max={20}
-          />
+          {/* Capacity buttons */}
+          <Text style={s.capacityLabel}>Seating Capacity</Text>
+          <View style={s.capacityRow}>
+            {([2, 4, 6] as const).map((cap) => (
+              <TouchableOpacity
+                key={cap}
+                style={[s.capacityBtn, capacity === cap && s.capacityBtnActive]}
+                onPress={() => setCapacity(cap)}
+              >
+                <Text style={[s.capacityText, capacity === cap && s.capacityTextActive]}>{cap}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           {/* Active toggle — only when editing */}
           {isEditing && (
