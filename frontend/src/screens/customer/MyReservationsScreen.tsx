@@ -99,6 +99,7 @@ const BookingCard: React.FC<{
         </View>
       )}
 
+
       {/* Cancel action */}
       {canCancel && onCancel && (
         <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
@@ -140,7 +141,19 @@ export const MyReservationsScreen: React.FC = () => {
       },
     ]);
   };
+  const newHeader = () => {
+    const bookingCount = reservations.length;
+    const totalGuests = reservations.reduce((sum, r) => sum + r.guestCount, 0);
+    <>
+      <Text >{bookingCount} bookings</Text>
+      <View>
+        <TouchableOpacity style={styles.logoutBtn} onPress={() => dispatch(logout())}>
+          <Ionicons name="log-out-outline" size={20} color={Colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+    </>
 
+  };
   const renderHeader = () => (
     <View style={styles.header}>
       <View style={styles.headerTop}>

@@ -1,4 +1,16 @@
-export const API_BASE_URL = 'http://localhost:3000';
+import { Platform } from 'react-native';
+
+// Dynamic base URL based on platform
+const getBaseURL = () => {
+  if (Platform.OS === 'android') {
+    // Android emulator uses 10.0.2.2 to reach host
+    return 'http://10.0.2.2:3000';
+  }
+  // iOS simulator and physical devices
+  return 'http://localhost:3000';
+};
+
+export const API_BASE_URL = getBaseURL();
 
 export const Endpoints = {
   // Auth

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-  View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert,
+  View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -18,6 +18,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { createDetailStyles } from '../customer/ReservationDetailScreen.styles';
 import { dateUtils } from '../../utils/dateUtils';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../../constants/colors';
 import { FontSize, FontWeight, Spacing } from '../../constants/layout';
 
 type Props = {
@@ -62,22 +63,27 @@ export const AdminReservationDetailScreen: React.FC<Props> = ({ navigation, rout
     dispatch(fetchAdminReservationByIdRequest(reservationId));
   }, [reservationId]);
 
-  if (isLoading || !selected) return <LoadingOverlay fullScreen />;
+  // Only show full-screen loader on initial load — NOT during status updates.
+  // If we show LoadingOverlay when isLoading=true, the screen disappears while
+  // the status update request is in-flight, making it look like nothing happened.
+  if (!selected) return <LoadingOverlay fullScreen />;
 
   const transitions = STATUS_TRANSITIONS[selected.status] ?? [];
 
   const handleStatusChange = (status: ReservationStatus) => {
-    Alert.alert('Update Status', `Change status to ${status}?`, [
+    Alert.alert('Update Status', `Change status to "${status}"?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Confirm',
-        onPress: () => dispatch(adminUpdateStatusRequest({ id: selected.id, status })),
+        onPress: () => {
+          dispatch(adminUpdateStatusRequest({ id: selected.id, status }));
+        },
       },
     ]);
   };
 
   const handleCancel = () => {
-    Alert.alert('Cancel Reservation', 'Are you sure?', [
+    Alert.alert('Cancel Reservation', 'Are you sure you want to cancel this reservation?', [
       { text: 'No', style: 'cancel' },
       {
         text: 'Yes, Cancel',
@@ -88,6 +94,13 @@ export const AdminReservationDetailScreen: React.FC<Props> = ({ navigation, rout
         },
       },
     ]);
+  };
+
+  const statusColor: Record<ReservationStatus, string> = {
+    PENDING: '#F59E0B',
+    CONFIRMED: Colors.success,
+    COMPLETED: colors.textSecondary,
+    CANCELLED: Colors.error,
   };
 
   return (
@@ -101,39 +114,51 @@ export const AdminReservationDetailScreen: React.FC<Props> = ({ navigation, rout
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Customer info */}
         {selected.customer && (
           <View style={styles.card}>
             <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: colors.text, marginBottom: Spacing.sm }}>
-              Customer Info
+              Customer
             </Text>
-            <Text style={{ color: colors.text, marginBottom: 2 }}>{selected.customer.name}</Text>
-            <Text style={{ color: colors.textSecondary, marginBottom: 2 }}>{selected.customer.email}</Text>
-            <Text style={{ color: colors.textSecondary }}>{selected.customer.phone}</Text>
+            <Text style={{ color: colors.text, fontWeight: FontWeight.medium }}>{selected.customer.name}</Text>
+            <Text style={{ color: colors.textSecondary, marginTop: 2 }}>{selected.customer.email}</Text>
+            {selected.customer.phone ? <Text style={{ color: colors.textSecondary, marginTop: 2 }}>{selected.customer.phone}</Text> : null}
           </View>
         )}
 
+        {/* Restaurant */}
         <View style={styles.card}>
-          <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: colors.text, marginBottom: 4 }}>
-            {selected.restaurant?.name ?? `Restaurant #${selected.restaurant_id}`}
+          <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: colors.text, marginBottom: 2 }}>
+            {selected.restaurant?.name ?? `Restaurant #${selected.restaurantId}`}
           </Text>
-          <Text style={{ color: colors.textSecondary }}>{selected.restaurant?.address}</Text>
+          {selected.restaurant?.address ? <Text style={{ color: colors.textSecondary }}>{selected.restaurant.address}</Text> : null}
         </View>
 
+        {/* Reservation details */}
         <View style={styles.card}>
-          <InfoItem icon="calendar-outline" label="Date" value={dateUtils.formatDate(selected.reservation_date)} borderColor={colors.border} textSecondary={colors.textSecondary} textColor={colors.text} />
-          <InfoItem icon="time-outline" label="Time" value={`${dateUtils.formatTime(selected.start_time)} – ${dateUtils.formatTime(selected.end_time)}`} borderColor={colors.border} textSecondary={colors.textSecondary} textColor={colors.text} />
-          <InfoItem icon="people-outline" label="Guests" value={`${selected.guest_count} guests`} borderColor={selected.special_requests ? colors.border : 'transparent'} textSecondary={colors.textSecondary} textColor={colors.text} />
-          {selected.special_requests ? (
-            <InfoItem icon="chatbubble-outline" label="Special Requests" value={selected.special_requests} borderColor="transparent" textSecondary={colors.textSecondary} textColor={colors.text} />
+          <InfoItem icon="calendar-outline" label="Date" value={dateUtils.formatDate(selected.reservationDate)} borderColor={colors.border} textSecondary={colors.textSecondary} textColor={colors.text} />
+          <InfoItem icon="time-outline" label="Time" value={`${dateUtils.formatTime(selected.startTime)} – ${dateUtils.formatTime(selected.endTime)}`} borderColor={colors.border} textSecondary={colors.textSecondary} textColor={colors.text} />
+          <InfoItem icon="people-outline" label="Guests" value={`${selected.guestCount} guests`} borderColor={selected.specialRequests ? colors.border : 'transparent'} textSecondary={colors.textSecondary} textColor={colors.text} />
+          {selected.specialRequests ? (
+            <InfoItem icon="chatbubble-outline" label="Special Requests" value={selected.specialRequests} borderColor="transparent" textSecondary={colors.textSecondary} textColor={colors.text} />
           ) : null}
         </View>
 
+        {/* Status update — keep screen visible, show inline spinner during update */}
         {transitions.length > 0 && (
-          <View style={[styles.card, { gap: 8 }]}>
-            <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: colors.text, marginBottom: Spacing.sm }}>
-              Update Status
+          <View style={styles.card}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm }}>
+              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: colors.text }}>
+                Update Status
+              </Text>
+              {isLoading && (
+                <ActivityIndicator size="small" color={Colors.primary} style={{ marginLeft: 10 }} />
+              )}
+            </View>
+            <Text style={{ fontSize: FontSize.xs, color: colors.textMuted, marginBottom: Spacing.md }}>
+              Current: <Text style={{ color: statusColor[selected.status], fontWeight: FontWeight.semibold }}>{selected.status}</Text>
             </Text>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
               {transitions.map((status) => (
                 <AppButton
                   key={status}
@@ -141,20 +166,29 @@ export const AdminReservationDetailScreen: React.FC<Props> = ({ navigation, rout
                   size="sm"
                   variant={status === 'CANCELLED' ? 'danger' : 'primary'}
                   onPress={() => handleStatusChange(status)}
-                  isLoading={isLoading}
+                  disabled={isLoading}  // disable (not hide) during request
                 />
               ))}
             </View>
           </View>
         )}
 
+        {/* Edit button */}
         {selected.status !== 'CANCELLED' && selected.status !== 'COMPLETED' && (
-          <View style={{ marginTop: Spacing.sm }}>
+          <View style={{ marginTop: Spacing.sm, gap: 10 }}>
             <AppButton
               label="Edit Reservation"
               variant="outline"
               fullWidth
               onPress={() => navigation.navigate('AdminEditReservation', { reservationId: selected.id })}
+              disabled={isLoading}
+            />
+            <AppButton
+              label="Cancel Reservation"
+              variant="danger"
+              fullWidth
+              onPress={handleCancel}
+              disabled={isLoading}
             />
           </View>
         )}

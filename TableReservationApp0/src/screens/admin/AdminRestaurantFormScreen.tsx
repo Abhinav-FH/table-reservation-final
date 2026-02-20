@@ -30,8 +30,8 @@ export const AdminRestaurantFormScreen: React.FC<Props> = ({ navigation }) => {
 
   const [name, setName] = useState(adminRestaurant?.name ?? '');
   const [address, setAddress] = useState(adminRestaurant?.address ?? '');
-  const [gridRows, setGridRows] = useState(adminRestaurant?.grid_rows?.toString() ?? '5');
-  const [gridCols, setGridCols] = useState(adminRestaurant?.grid_cols?.toString() ?? '5');
+  const [gridRows, setGridRows] = useState(adminRestaurant?.gridRows?.toString() ?? '5');
+  const [gridCols, setGridCols] = useState(adminRestaurant?.gridCols?.toString() ?? '5');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {

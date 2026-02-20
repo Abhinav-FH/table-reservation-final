@@ -3,35 +3,57 @@ import { View, Text, SafeAreaView, ScrollView, TouchableOpacity } from 'react-na
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AdminStackParamList } from '../../types';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
-import { fetchFloorPlanRequest } from '../../store/slices/tableSlice';
+import { fetchFloorPlanRequest, fetchTablesRequest } from '../../store/slices/tableSlice';
 import { LoadingOverlay } from '../../components/common/LoadingOverlay';
+import { EmptyState } from '../../components/common/EmptyState';
 import { useTheme } from '../../hooks/useTheme';
 import { createFloorPlanStyles } from './AdminFloorPlanScreen.styles';
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { Table } from '../../types';
 
 type Props = {
   navigation: NativeStackNavigationProp<AdminStackParamList, 'AdminFloorPlan'>;
 };
 
+// Build a 2D grid from flat table list using grid_row / grid_col
+function buildGridFromList(tables: Table[], rows: number, cols: number): (Table | null)[][] {
+  const grid: (Table | null)[][] = Array.from({ length: rows }, () => Array(cols).fill(null));
+  tables.forEach((t) => {
+    const r = t.gridRow ?? 0;
+    const c = t.gridCol ?? 0;
+    if (r < rows && c < cols) grid[r][c] = t;
+  });
+  return grid;
+}
+
 export const AdminFloorPlanScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useTheme();
   const dispatch = useAppDispatch();
-  const { floorPlan, isLoading } = useAppSelector((s) => s.table);
+  // floorPlan may be undefined / empty — always default to []
+  const { floorPlan = [], list, isLoading } = useAppSelector((s) => s.table);
   const { adminRestaurant } = useAppSelector((s) => s.restaurant);
   const styles = createFloorPlanStyles(colors);
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
     dispatch(fetchFloorPlanRequest(today));
+    dispatch(fetchTablesRequest()); // also load flat list as fallback
   }, []);
 
-  const getTableColor = (status?: string) => {
-    switch (status) {
-      case 'reserved': return Colors.error;
-      case 'available': return Colors.success;
-      default: return colors.border;
-    }
+  // Use floor plan from API; if it's empty/undefined, build one from the flat list
+  const safeFloorPlan = Array.isArray(floorPlan) && floorPlan.length > 0
+    ? floorPlan
+    : buildGridFromList(
+        list,
+        Math.max(...list.map((t) => (t.gridRow ?? 0) + 1), adminRestaurant?.gridRows ?? 5, 1),
+        Math.max(...list.map((t) => (t.gridCol ?? 0) + 1), adminRestaurant?.gridCols ?? 5, 1),
+      );
+
+  const getTableColor = (table: Table) => {
+    if (!table.isActive) return colors.border;
+    if (table.status === 'reserved') return Colors.error;
+    return Colors.success;
   };
 
   return (
@@ -43,8 +65,16 @@ export const AdminFloorPlanScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.title}>Floor Plan</Text>
       </View>
 
-      {isLoading ? (
+      {isLoading && list.length === 0 ? (
         <LoadingOverlay />
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon="grid-outline"
+          title="No tables yet"
+          message="Add tables from the Tables screen to see them here."
+          actionLabel="Add Tables"
+          onAction={() => navigation.navigate('AdminTableForm', {})}
+        />
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.legend}>
@@ -64,19 +94,19 @@ export const AdminFloorPlanScreen: React.FC<Props> = ({ navigation }) => {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.grid}>
-              {floorPlan.map((row, rowIdx) => (
-                <View key={rowIdx} style={styles.gridRow}>
-                  {row.map((table, colIdx) =>
+              {safeFloorPlan.map((row, rowIdx) => (
+                <View key={`row-${rowIdx}`} style={styles.gridRow}>
+                  {(Array.isArray(row) ? row : []).map((table, colIdx) =>
                     table ? (
                       <View
-                        key={table.id}
-                        style={[styles.tableCell, { borderColor: getTableColor(table.status) }]}
+                        key={`table-${table.id}`}
+                        style={[styles.tableCell, { borderColor: getTableColor(table) }]}
                       >
                         <Text style={styles.tableCellLabel}>{table.label}</Text>
                         <Text style={styles.tableCellCapacity}>👥 {table.capacity}</Text>
                       </View>
                     ) : (
-                      <View key={colIdx} style={styles.emptyCell} />
+                      <View key={`empty-${rowIdx}-${colIdx}`} style={styles.emptyCell} />
                     ),
                   )}
                 </View>

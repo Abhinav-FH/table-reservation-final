@@ -1,20 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, ScrollView, SafeAreaView, TouchableOpacity,
-  KeyboardAvoidingView, Platform, Switch,
+  KeyboardAvoidingView, Platform, Switch, StyleSheet,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { AdminStackParamList } from '../../types';
 import { AppInput } from '../../components/common/AppInput';
 import { AppButton } from '../../components/common/AppButton';
+import { GuestPicker } from '../../components/common/GuestPicker';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import { addTableRequest, updateTableRequest } from '../../store/slices/tableSlice';
 import { useTheme } from '../../hooks/useTheme';
-import { createFormStyles } from '../customer/NewReservationScreen.styles';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
-import { Spacing, FontSize } from '../../constants/layout';
+import { Spacing, FontSize, FontWeight, BorderRadius } from '../../constants/layout';
+import Toast from 'react-native-toast-message';
+
+const MAX_TABLES = 10;
 
 type Props = {
   navigation: NativeStackNavigationProp<AdminStackParamList, 'AdminTableForm'>;
@@ -22,66 +25,127 @@ type Props = {
 };
 
 export const AdminTableFormScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { tableId } = route.params;
+  const { tableId } = route.params ?? {};
   const { colors } = useTheme();
   const dispatch = useAppDispatch();
   const { list, isLoading } = useAppSelector((s) => s.table);
-  const styles = createFormStyles(colors);
+  const { adminRestaurant } = useAppSelector((s) => s.restaurant);
   const existing = tableId ? list.find((t) => t.id === tableId) : undefined;
+  const isEditing = !!existing;
 
   const [label, setLabel] = useState(existing?.label ?? '');
-  const [capacity, setCapacity] = useState(existing?.capacity?.toString() ?? '');
-  const [gridRow, setGridRow] = useState(existing?.grid_row?.toString() ?? '');
-  const [gridCol, setGridCol] = useState(existing?.grid_col?.toString() ?? '');
-  const [isActive, setIsActive] = useState(existing?.is_active ?? true);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [capacity, setCapacity] = useState(existing?.capacity ?? 2);
+  const [isActive, setIsActive] = useState(existing?.isActive ?? true);
+  const [labelError, setLabelError] = useState('');
 
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!label.trim()) e.label = 'Label required';
-    if (!capacity || isNaN(Number(capacity)) || Number(capacity) < 1) e.capacity = 'Valid capacity required';
-    if (!gridRow || isNaN(Number(gridRow))) e.gridRow = 'Grid row required';
-    if (!gridCol || isNaN(Number(gridCol))) e.gridCol = 'Grid col required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
+  // Auto-place table in next available grid cell
+  const autoPosition = () => {
+    const cols = Number(
+      (adminRestaurant as any)?.gridCols ??
+      (adminRestaurant as any)?.grid_cols ??
+      5
+    );
+    const idx = list.length;
+    return { grid_row: Math.floor(idx / cols), grid_col: idx % cols };
   };
 
   const handleSubmit = () => {
-    if (!validate()) return;
-    const payload = {
-      label: label.trim(),
-      capacity: Number(capacity),
-      grid_row: Number(gridRow),
-      grid_col: Number(gridCol),
-      is_active: isActive,
-    };
-    if (tableId) {
-      dispatch(updateTableRequest({ id: tableId, payload }));
+    if (!label.trim()) { setLabelError('Table name is required'); return; }
+
+    if (!isEditing && list.length >= MAX_TABLES) {
+      Toast.show({ type: 'error', text1: 'Table Limit Reached', text2: `Maximum ${MAX_TABLES} tables per restaurant.` });
+      return;
+    }
+
+    setLabelError('');
+
+    if (isEditing) {
+      dispatch(updateTableRequest({
+        id: tableId!,
+        payload: {
+          label: label.trim(),
+          capacity,
+          isActive: isActive,
+          gridRow: existing!.gridRow,
+          gridCol: existing!.gridCol,
+        },
+      }));
     } else {
-      dispatch(addTableRequest(payload));
+      const pos = autoPosition();
+      dispatch(addTableRequest({
+        label: label.trim(),
+        capacity,
+        isActive: true,  // always active on creation
+        ...pos,
+      }));
     }
     navigation.goBack();
   };
 
+  const s = StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+      borderBottomWidth: 1, borderBottomColor: colors.border,
+    },
+    backBtn: { padding: Spacing.xs, marginRight: Spacing.sm },
+    title: { fontSize: FontSize.lg, fontWeight: FontWeight.semibold, color: colors.text },
+    content: { padding: Spacing.md, paddingBottom: 80 },
+    switchRow: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.inputBackground, borderRadius: BorderRadius.md,
+      borderWidth: 1.5, borderColor: colors.border,
+      paddingHorizontal: Spacing.md, paddingVertical: 14, marginBottom: Spacing.md,
+    },
+    switchLabelWrap: { flex: 1, marginLeft: Spacing.md },
+    switchLabel: { fontSize: FontSize.md, color: colors.text, fontWeight: FontWeight.medium },
+    switchSub: { fontSize: FontSize.xs, color: colors.textSecondary, marginTop: 2 },
+    hint: {
+      flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+      backgroundColor: colors.surfaceSecondary,
+      borderRadius: BorderRadius.md, padding: Spacing.md, marginBottom: Spacing.md,
+    },
+    hintText: { fontSize: FontSize.xs, color: colors.textSecondary, flex: 1, lineHeight: 18 },
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+    <SafeAreaView style={s.container}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>{tableId ? 'Edit Table' : 'Add Table'}</Text>
+          <Text style={s.title}>{isEditing ? 'Edit Table' : 'Add New Table'}</Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <AppInput label="Table Label" placeholder="e.g. Table A1" value={label} onChangeText={setLabel} error={errors.label} />
-          <AppInput label="Capacity (guests)" placeholder="e.g. 4" value={capacity} onChangeText={setCapacity} keyboardType="numeric" error={errors.capacity} />
-          <AppInput label="Grid Row" placeholder="e.g. 1" value={gridRow} onChangeText={setGridRow} keyboardType="numeric" error={errors.gridRow} />
-          <AppInput label="Grid Column" placeholder="e.g. 1" value={gridCol} onChangeText={setGridCol} keyboardType="numeric" error={errors.gridCol} />
+        <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+          <AppInput
+            label="Table Name"
+            placeholder='e.g. "Window Seat", "Table 4", "Patio A"'
+            value={label}
+            onChangeText={(t) => { setLabel(t); setLabelError(''); }}
+            leftIcon="restaurant-outline"
+            error={labelError}
+          />
 
-          {tableId && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
-              <Text style={{ flex: 1, fontSize: FontSize.md, color: colors.text }}>Active</Text>
+          {/* Capacity stepper — min 1, max 20, increments by 1 */}
+          <GuestPicker
+            label="Seating Capacity"
+            value={capacity}
+            onChange={setCapacity}
+            min={1}
+            max={20}
+          />
+
+          {/* Active toggle — only when editing */}
+          {isEditing && (
+            <View style={s.switchRow}>
+              <Ionicons name="power-outline" size={18} color={colors.textSecondary} />
+              <View style={s.switchLabelWrap}>
+                <Text style={s.switchLabel}>Table Active</Text>
+                <Text style={s.switchSub}>Inactive tables won't appear in new bookings</Text>
+              </View>
               <Switch
                 value={isActive}
                 onValueChange={setIsActive}
@@ -91,12 +155,23 @@ export const AdminTableFormScreen: React.FC<Props> = ({ navigation, route }) => 
             </View>
           )}
 
+          {!isEditing && (
+            <View style={s.hint}>
+              <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+              <Text style={s.hintText}>
+                Table will be automatically placed on the floor plan and set as active.
+                {list.length >= MAX_TABLES - 1
+                  ? ` You have ${list.length}/${MAX_TABLES} tables. This is your last available slot.`
+                  : ` You have ${list.length}/${MAX_TABLES} tables.`}
+              </Text>
+            </View>
+          )}
+
           <AppButton
-            label={tableId ? 'Save Changes' : 'Add Table'}
+            label={isEditing ? 'Save Changes' : 'Add Table'}
             fullWidth
             onPress={handleSubmit}
             isLoading={isLoading}
-            style={styles.submitBtn}
           />
         </ScrollView>
       </KeyboardAvoidingView>

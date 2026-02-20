@@ -60,7 +60,7 @@ export const CreateReservationScreen: React.FC<Props> = ({ route, navigation }) 
     }
     try {
       await createReservation({
-        restaurantId,
+        restaurantId: String(restaurantId),
         reservationDate: dateStr,
         startTime: selectedTime,
         guestCount,

@@ -41,8 +41,8 @@ export interface Restaurant {
   id: number;
   name: string;
   address: string;
-  grid_rows: number;
-  grid_cols: number;
+  gridRows: number;
+  gridCols: number;
   activeTableCount?: number;
 }
 
@@ -59,12 +59,12 @@ export type TableStatus = 'available' | 'reserved' | 'inactive';
 
 export interface Table {
   id: number;
-  restaurant_id: number;
+  restaurantId: number;
   label: string;
   capacity: number;
-  grid_row: number;
-  grid_col: number;
-  is_active: boolean;
+  gridRow: number;
+  gridCol: number;
+  isActive: boolean;
   status?: TableStatus;
 }
 
@@ -81,17 +81,17 @@ export type CreatedBy = 'CUSTOMER' | 'ADMIN';
 
 export interface Reservation {
   id: number;
-  customer_id: number;
-  restaurant_id: number;
-  reservation_date: string;
-  start_time: string;
-  end_time: string;
-  guest_count: number;
+  customerId: number;
+  restaurantId: number;
+  reservationDate: string;
+  startTime: string;
+  endTime: string;
+  guestCount: number;
   status: ReservationStatus;
-  special_requests?: string;
-  created_by: CreatedBy;
-  created_at: string;
-  updated_at: string;
+  specialRequests?: string;
+  createdBy: CreatedBy;
+  createdAt: string;
+  updatedAt: string;
   customer?: {
     name: string;
     email: string;
@@ -102,6 +102,7 @@ export interface Reservation {
     address: string;
   };
   tables?: Table[];
+  reservationTables?: { table: Table }[]; // From includes
 }
 
 export interface ReservationFilters {
@@ -206,4 +207,5 @@ export type AdminStackParamList = {
   AdminTableForm: { tableId?: number };
   AdminRestaurantForm: undefined;
   AdminFloorPlan: undefined;
+  AdminSetup: undefined;
 };

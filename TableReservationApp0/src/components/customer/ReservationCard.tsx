@@ -21,11 +21,18 @@ export const ReservationCard: React.FC<ReservationCardProps> = ({
   const { colors } = useTheme();
   const styles = createReservationCardStyles(colors);
 
+  // Safely access fields with fallbacks
+  const restaurantId = reservation.restaurantId ?? reservation.restaurant_id ?? '';
+  const reservationDate = reservation.reservationDate ?? reservation.reservation_date ?? '';
+  const startTime = reservation.startTime ?? reservation.start_time ?? '';
+  const endTime = reservation.endTime ?? reservation.end_time ?? '';
+  const guestCount = reservation.guestCount ?? reservation.guest_count ?? 0;
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.header}>
         <Text style={styles.restaurantName} numberOfLines={1}>
-          {reservation.restaurant?.name ?? `Restaurant #${reservation.restaurant_id}`}
+          {reservation.restaurant?.name ?? `Restaurant #${restaurantId}`}
         </Text>
         <StatusBadge status={reservation.status} />
       </View>
@@ -39,19 +46,19 @@ export const ReservationCard: React.FC<ReservationCardProps> = ({
 
       <View style={styles.row}>
         <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
-        <Text style={styles.detail}>{dateUtils.formatDate(reservation.reservation_date)}</Text>
+        <Text style={styles.detail}>{dateUtils.formatDate(reservationDate)}</Text>
       </View>
 
       <View style={styles.row}>
         <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
         <Text style={styles.detail}>
-          {dateUtils.formatTime(reservation.start_time)} – {dateUtils.formatTime(reservation.end_time)}
+          {dateUtils.formatTime(startTime)} – {dateUtils.formatTime(endTime)}
         </Text>
       </View>
 
       <View style={styles.row}>
         <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
-        <Text style={styles.detail}>{reservation.guest_count} guests</Text>
+        <Text style={styles.detail}>{guestCount} guests</Text>
       </View>
 
       <Ionicons name="chevron-forward" size={18} color={colors.textMuted} style={styles.chevron} />

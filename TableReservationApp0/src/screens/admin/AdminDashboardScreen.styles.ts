@@ -1,19 +1,20 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { BorderRadius, FontSize, FontWeight, Shadow, Spacing } from '../../constants/layout';
 import { Colors } from '../../constants/colors';
 import { ThemeColors } from '../../theme/themeUtils';
 
-const { width } = Dimensions.get('window');
-
 export function createDashboardStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+
+    // ── Header ──────────────────────────────────────────────
     headerSection: {
-      padding: Spacing.md,
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.md,
       paddingBottom: Spacing.sm,
     },
     greeting: {
-      fontSize: FontSize.md,
+      fontSize: FontSize.sm,
       color: colors.textSecondary,
     },
     restaurantName: {
@@ -22,33 +23,42 @@ export function createDashboardStyles(colors: ThemeColors) {
       color: colors.text,
       marginTop: 2,
     },
+
+    // ── No restaurant warning ────────────────────────────────
     noRestaurantCard: {
-      margin: Spacing.md,
-      padding: Spacing.lg,
-      backgroundColor: Colors.errorLight,
-      borderRadius: BorderRadius.lg,
+      flexDirection: 'row',
       alignItems: 'center',
+      gap: 12,
+      backgroundColor: Colors.infoLight,
+      marginHorizontal: Spacing.md,
+      marginBottom: Spacing.md,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     noRestaurantText: {
       fontSize: FontSize.sm,
-      color: Colors.primary,
-      textAlign: 'center',
-      marginTop: Spacing.sm,
+      color: Colors.info,
+      flex: 1,
+      lineHeight: 20,
     },
+
+    // ── Today summary ────────────────────────────────────────
     summaryRow: {
       paddingHorizontal: Spacing.md,
-      marginBottom: Spacing.sm,
+      marginBottom: Spacing.md,
     },
     summaryCard: {
       backgroundColor: colors.card,
-      borderRadius: BorderRadius.lg,
+      borderRadius: BorderRadius.xl,
       padding: Spacing.lg,
       alignItems: 'center',
       ...Shadow.small,
       shadowColor: colors.shadow,
     },
     summaryCardFull: {
-      width: '100%',
+      // full-width variant — used as [styles.summaryCard, styles.summaryCardFull]
     },
     summaryNumber: {
       fontSize: 40,
@@ -61,12 +71,13 @@ export function createDashboardStyles(colors: ThemeColors) {
       color: colors.textSecondary,
       marginTop: 4,
     },
+
+    // ── Status stats ─────────────────────────────────────────
     sectionTitle: {
       fontSize: FontSize.md,
       fontWeight: FontWeight.semibold,
       color: colors.text,
       paddingHorizontal: Spacing.md,
-      marginTop: Spacing.md,
       marginBottom: Spacing.sm,
     },
     statsGrid: {
@@ -74,14 +85,16 @@ export function createDashboardStyles(colors: ThemeColors) {
       flexWrap: 'wrap',
       paddingHorizontal: Spacing.sm,
       gap: Spacing.sm,
-      marginBottom: Spacing.xl,
+      paddingBottom: Spacing.xl,
     },
     statCard: {
-      width: (width - Spacing.sm * 3 - Spacing.sm * 2) / 2,
+      // Each card is ~half width minus gap
+      width: '47%',
       backgroundColor: colors.card,
       borderRadius: BorderRadius.lg,
       padding: Spacing.md,
       alignItems: 'center',
+      marginHorizontal: '1.5%',
       ...Shadow.small,
       shadowColor: colors.shadow,
     },
@@ -89,14 +102,13 @@ export function createDashboardStyles(colors: ThemeColors) {
       fontSize: FontSize.xxl,
       fontWeight: FontWeight.bold,
       color: colors.text,
-      marginTop: Spacing.xs,
+      marginTop: 6,
     },
     statLabel: {
       fontSize: FontSize.xs,
       color: colors.textSecondary,
       marginTop: 2,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
+      fontWeight: FontWeight.medium,
     },
   });
 }

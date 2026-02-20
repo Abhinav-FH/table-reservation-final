@@ -13,7 +13,9 @@ import { AdminFloorPlanScreen } from '../screens/admin/AdminFloorPlanScreen';
 import { AdminNewReservationScreen } from '../screens/admin/AdminNewReservationScreen';
 import { AdminEditReservationScreen } from '../screens/admin/AdminEditReservationScreen';
 import { AdminRestaurantFormScreen } from '../screens/admin/AdminRestaurantFormScreen';
+import { AdminSetupScreen } from '../screens/admin/AdminSetupScreen';
 import { useTheme } from '../hooks/useTheme';
+import { useAppSelector } from '../hooks/useAppDispatch';
 import { Colors } from '../constants/colors';
 
 const Tab = createBottomTabNavigator<AdminTabParamList>();
@@ -27,10 +29,7 @@ const AdminTabs: React.FC = () => {
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: colors.icon,
-        tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.tabBarBorder,
-        },
+        tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.tabBarBorder },
         tabBarIcon: ({ color, size, focused }) => {
           const icons: Record<string, string> = {
             DashboardTab: focused ? 'grid' : 'grid-outline',
@@ -53,6 +52,9 @@ const AdminTabs: React.FC = () => {
 export const AdminNavigator: React.FC = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* Setup screen shown first for new admins with no restaurant */}
+      <Stack.Screen name="AdminSetup" component={AdminSetupScreen} />
+      
       <Stack.Screen name="AdminTabs" component={AdminTabs} />
       <Stack.Screen name="AdminReservationDetail" component={AdminReservationDetailScreen} />
       <Stack.Screen name="AdminNewReservation" component={AdminNewReservationScreen} />

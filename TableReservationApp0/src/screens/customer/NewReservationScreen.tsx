@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, SafeAreaView, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ActivityIndicator,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { CustomerStackParamList } from '../../types';
-import { AppInput } from '../../components/common/AppInput';
+import { CustomerStackParamList, TimeSlot } from '../../types';
 import { AppButton } from '../../components/common/AppButton';
+import { AppInput } from '../../components/common/AppInput';
+import { DatePicker } from '../../components/common/DatePicker';
+import { GuestPicker } from '../../components/common/GuestPicker';
 import { useAppDispatch, useAppSelector } from '../../hooks/useAppDispatch';
 import {
-  fetchAvailabilityRequest,
-  createReservationRequest,
-  clearTimeSlots,
+  fetchAvailabilityRequest, createReservationRequest, clearTimeSlots,
 } from '../../store/slices/reservationSlice';
 import { useTheme } from '../../hooks/useTheme';
 import { createFormStyles } from './NewReservationScreen.styles';
 import { Colors } from '../../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { dateUtils } from '../../utils/dateUtils';
-import { TimeSlot } from '../../types';
 import Toast from 'react-native-toast-message';
+import { Spacing } from '../../constants/layout';
 
 type Props = {
   navigation: NativeStackNavigationProp<CustomerStackParamList, 'NewReservation'>;
@@ -35,48 +35,34 @@ export const NewReservationScreen: React.FC<Props> = ({ navigation, route }) => 
   const styles = createFormStyles(colors);
 
   const [date, setDate] = useState('');
-  const [guestCount, setGuestCount] = useState('');
+  const [guestCount, setGuestCount] = useState(2);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [specialRequests, setSpecialRequests] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dateError, setDateError] = useState('');
   const [slotsChecked, setSlotsChecked] = useState(false);
 
-  useEffect(() => {
-    return () => { dispatch(clearTimeSlots()); };
-  }, []);
-
-  const validateDateGuests = () => {
-    const e: Record<string, string> = {};
-    if (!date) e.date = 'Please enter a date (YYYY-MM-DD)';
-    else if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) e.date = 'Use format YYYY-MM-DD';
-    if (!guestCount || isNaN(Number(guestCount)) || Number(guestCount) < 1)
-      e.guestCount = 'Enter valid guest count';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  useEffect(() => () => { dispatch(clearTimeSlots()); }, []);
+  useEffect(() => { setSelectedSlot(null); setSlotsChecked(false); }, [date, guestCount]);
 
   const checkAvailability = () => {
-    if (!validateDateGuests()) return;
+    if (!date) { setDateError('Please select a date first'); return; }
+    setDateError('');
     setSelectedSlot(null);
     setSlotsChecked(true);
-    dispatch(fetchAvailabilityRequest({
-      restaurantId,
-      date,
-      guestCount: Number(guestCount),
-    }));
+    dispatch(fetchAvailabilityRequest({ restaurantId, date, guestCount }));
   };
 
   const handleSubmit = () => {
     if (!selectedSlot) {
-      Toast.show({ type: 'error', text1: 'Select a time slot', text2: 'Please pick an available slot first.' });
+      Toast.show({ type: 'error', text1: 'Select a time slot first' });
       return;
     }
     dispatch(createReservationRequest({
-      restaurantId: restaurantId,
+      restaurantId: Number(restaurantId),
       reservationDate: date,
-      startTime: selectedSlot.start_time,
-      guestCount: Number(guestCount),
-      specialRequests: specialRequests || undefined,
+      startTime: selectedSlot.start_time.slice(0, 5),
+      guestCount,
+      specialRequests: specialRequests.trim() || undefined,
     }));
     navigation.goBack();
   };
@@ -92,57 +78,61 @@ export const NewReservationScreen: React.FC<Props> = ({ navigation, route }) => 
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.sectionTitle}>Reservation Details</Text>
-
-          <AppInput
-            label="Date (YYYY-MM-DD)"
-            placeholder="e.g. 2026-03-15"
+          <DatePicker
+            label="1. Select Date"
             value={date}
-            onChangeText={setDate}
-            leftIcon="calendar-outline"
-            error={errors.date}
+            onChange={(d) => { setDate(d); setDateError(''); }}
+            error={dateError}
           />
-          <AppInput
-            label="Number of Guests"
-            placeholder="e.g. 4"
-            value={guestCount}
-            onChangeText={setGuestCount}
-            keyboardType="numeric"
-            leftIcon="people-outline"
-            error={errors.guestCount}
-          />
+
+          <GuestPicker label="2. Number of Guests" value={guestCount} onChange={setGuestCount} min={1} max={12} />
 
           <AppButton
-            label="Check Availability"
+            label={slotsChecked ? 'Refresh Availability' : '3. Check Available Times'}
             variant="outline"
             fullWidth
             onPress={checkAvailability}
             isLoading={isSlotLoading}
+            style={{ marginBottom: Spacing.md }}
           />
 
           {slotsChecked && !isSlotLoading && (
             <View style={styles.slotsSection}>
-              <Text style={styles.sectionTitle}>Available Time Slots</Text>
+              <Text style={styles.sectionTitle}>
+                {timeSlots.length > 0 ? '4. Pick a Time' : 'No Times Available'}
+              </Text>
+
               {timeSlots.length === 0 ? (
-                <Text style={styles.noSlots}>No slots available for this date and guest count.</Text>
+                <View style={styles.noSlotsBox}>
+                  <Ionicons name="calendar-clear-outline" size={32} color={colors.textMuted} />
+                  <Text style={styles.noSlots}>No availability for {guestCount} guests on this date.</Text>
+                  <Text style={styles.noSlotsHint}>Try another date or fewer guests.</Text>
+                </View>
               ) : (
                 <View style={styles.slotsGrid}>
                   {timeSlots.map((slot, i) => {
-                    const active = selectedSlot?.start_time === slot.start_time;
+                    const isSelected = selectedSlot?.start_time === slot.start_time;
+                    const isUnavailable = !slot.available;
                     return (
                       <TouchableOpacity
                         key={i}
                         style={[
                           styles.slotChip,
-                          active && styles.slotChipActive,
-                          !slot.available && styles.slotChipDisabled,
+                          isSelected && styles.slotChipActive,
+                          isUnavailable && styles.slotChipDisabled,
                         ]}
-                        onPress={() => slot.available && setSelectedSlot(slot)}
-                        disabled={!slot.available}
+                        onPress={() => { if (!isUnavailable) setSelectedSlot(slot); }}
+                        disabled={isUnavailable}
+                        activeOpacity={0.75}
                       >
-                        <Text style={[styles.slotText, active && styles.slotTextActive, !slot.available && styles.slotTextDisabled]}>
+                        <Text style={[
+                          styles.slotText,
+                          isSelected && styles.slotTextActive,
+                          isUnavailable && styles.slotTextDisabled,
+                        ]}>
                           {dateUtils.formatTime(slot.start_time)}
                         </Text>
+                        {isUnavailable && <Text style={styles.slotFullLabel}>Full</Text>}
                       </TouchableOpacity>
                     );
                   })}
@@ -151,9 +141,19 @@ export const NewReservationScreen: React.FC<Props> = ({ navigation, route }) => 
             </View>
           )}
 
+          {selectedSlot && (
+            <View style={styles.selectedBanner}>
+              <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
+              <Text style={styles.selectedBannerText}>
+                {dateUtils.formatDate(date)} · {dateUtils.formatTime(selectedSlot.start_time)}
+                {selectedSlot.end_time ? ` – ${dateUtils.formatTime(selectedSlot.end_time)}` : ''}
+              </Text>
+            </View>
+          )}
+
           <AppInput
             label="Special Requests (Optional)"
-            placeholder="Any dietary requirements?"
+            placeholder="Dietary requirements, occasion, seating preference..."
             value={specialRequests}
             onChangeText={setSpecialRequests}
             multiline

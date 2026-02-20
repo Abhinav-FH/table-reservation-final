@@ -1,10 +1,13 @@
 import { StyleSheet } from 'react-native';
 import { BorderRadius, FontSize, FontWeight, Shadow, Spacing } from '../../constants/layout';
+import { Colors } from '../../constants/colors';
 import { ThemeColors } from '../../theme/themeUtils';
 
 export function createTablesStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+
+    // ── Header ──────────────────────────────────────────────
     headerRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -18,6 +21,12 @@ export function createTablesStyles(colors: ThemeColors) {
       fontWeight: FontWeight.bold,
       color: colors.text,
     },
+    subheading: {
+      fontSize: FontSize.sm,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    // Row of icon buttons on the right of the header
     headerActions: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -26,11 +35,15 @@ export function createTablesStyles(colors: ThemeColors) {
     iconBtn: {
       padding: 4,
     },
+
+    // ── List ─────────────────────────────────────────────────
     list: {
       padding: Spacing.md,
       paddingTop: Spacing.xs,
-      flexGrow: 1,
+      paddingBottom: 100,    // room above FAB
     },
+
+    // ── Table row card ───────────────────────────────────────
     tableRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -47,9 +60,7 @@ export function createTablesStyles(colors: ThemeColors) {
       borderRadius: 5,
       marginRight: Spacing.md,
     },
-    tableInfo: {
-      flex: 1,
-    },
+    tableInfo: { flex: 1 },
     tableLabel: {
       fontSize: FontSize.md,
       fontWeight: FontWeight.semibold,
@@ -69,8 +80,24 @@ export function createTablesStyles(colors: ThemeColors) {
       flexDirection: 'row',
       gap: Spacing.sm,
     },
-    actionBtn: {
-      padding: 6,
+    actionBtn: { padding: 6 },
+
+    // ── FAB ──────────────────────────────────────────────────
+    fab: {
+      position: 'absolute',
+      bottom: 28,
+      right: 24,
+      width: 58,
+      height: 58,
+      borderRadius: 29,
+      backgroundColor: Colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: Colors.primary,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
+      elevation: 10,
     },
   });
 }
